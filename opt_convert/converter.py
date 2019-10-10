@@ -1,10 +1,8 @@
 from pathlib import Path
-from opt_convert import Messages
+from opt_convert import Messages, Model
 
 class Converter:
 
-    supported_out_formats = ['mpl', 'mps']
-    supported_in_formats = ['mpl', 'mps']
     debug = False
 
     def __init__(self, file, out_format):
@@ -23,16 +21,15 @@ class Converter:
 
     def run(self):
 
-        if self.out_format not in Converter.supported_out_formats:
-            raise ValueError(Messages.MSG_OUT_FORMAT_NOT_SUPPORTED)
+        if Converter.isDebug():
+            Model.setDebug(True)
 
-        if not Path(self.file).is_file():
-            raise ValueError(Messages.MSG_INSTANCE_FILE_NOT_FOUND)
+        try:
+            model = Model(Path(self.file))
+            model.save(self.out_format)
+        except Exception as e:
+            raise e
 
-        if self.in_format not in Converter.supported_in_formats:
-            raise ValueError(Messages.MSG_INPUT_FORMAT_NOT_SUPPORTED)
-
-        # TODO: convert
         if Converter.isDebug():
             print(f'File {self.file} converted into format {self.out_format}.')
 

@@ -6,6 +6,7 @@ from argparse import ArgumentError
 from pathlib import Path
 
 Converter.setDebug(True)
+Model.setDebug(True)
 
 class TestConverter(TestCase):
 
@@ -21,9 +22,9 @@ class TestConverter(TestCase):
         filename = 'instance_1.mps'
         format = 'mpl'
         converter = Converter(filename, format)
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(FileNotFoundError) as e:
             converter.run()
-        self.assertEqual(str(e.exception), "Instance file not found.")
+        self.assertEqual(str(e.exception), Messages.MSG_INSTANCE_FILE_NOT_FOUND)
 
     def test_run_not_supported_in_format(self):
         filename = 'instance.trk'
@@ -33,7 +34,7 @@ class TestConverter(TestCase):
         converter = Converter(filename, format)
         with self.assertRaises(ValueError) as e:
             converter.run()
-        self.assertEqual(str(e.exception), "Input file format is not supported.")
+        self.assertEqual(str(e.exception), Messages.MSG_INPUT_FORMAT_NOT_SUPPORTED)
 
     def test_run_not_supported_out_format(self):
         filename = 'instance_1.mps'
@@ -43,7 +44,7 @@ class TestConverter(TestCase):
         converter = Converter(filename, format)
         with self.assertRaises(ValueError) as e:
             converter.run()
-        self.assertEqual(str(e.exception), "Output file format is not supported.")
+        self.assertEqual(str(e.exception), Messages.MSG_OUT_FORMAT_NOT_SUPPORTED)
 
     @classmethod
     def tearDownClass(cls):
@@ -56,9 +57,62 @@ class TestConverter(TestCase):
 
 class TestModel(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        cls.temp_files = ['mps_instance.mps', 'instance.trk', 'mpl_instance.mpl', 'lp_instance.lp', 'mps_instance_2.mps']
+        cls.initial_argv = sys.argv
+        for file in cls.temp_files:
+            f = Path(file)
+            f.write_text('text')
+
     def test__init__(self):
-        Model()
-        self.assertTrue(True)
+        filename = 'mps_instance'
+        format = 'mps'
+        model = Model(Path(f'{filename}.{format}'))
+        self.assertEqual(model.name, filename)
+
+    def test__init_not_existing_file(self):
+        filename = 'mps_instance_na'
+        format = 'mps'
+        with self.assertRaises(FileNotFoundError) as e:
+            Model(Path(f'{filename}.{format}'))
+        self.assertEqual(str(e.exception), Messages.MSG_INSTANCE_FILE_NOT_FOUND)
+
+    def test__init_not_supported_in_file(self):
+        filename = 'instance'
+        format = 'trk'
+        with self.assertRaises(ValueError) as e:
+            Model(Path(f'{filename}.{format}'))
+        self.assertEqual(str(e.exception), Messages.MSG_INPUT_FORMAT_NOT_SUPPORTED)
+
+    def test__save(self):
+        filename = 'mps_instance'
+        format = 'mps'
+        model = Model(Path(f'{filename}.{format}'))
+        self.assertTrue(model.save())
+
+    def test__save_another_file_and_format(self):
+        filename = 'mps_instance'
+        format = 'mps'
+        model = Model(Path(f'{filename}.{format}'))
+        self.assertTrue(model.save('lp', 'new_instances'))
+
+    def test_save_not_supported_out_format(self):
+        filename = 'mps_instance'
+        format = 'mps'
+        out_format = 'trk'
+        model = Model(Path(f'{filename}.{format}'))
+        with self.assertRaises(ValueError) as e:
+            model.save(format=out_format)
+        self.assertEqual(str(e.exception), Messages.MSG_OUT_FORMAT_NOT_SUPPORTED)
+
+    @classmethod
+    def tearDownClass(cls):
+        for file in cls.temp_files + ['new_instance.lp']:
+            f = Path(file)
+            if f.is_file():
+                f.unlink()
+
 
 class Test_command_line(TestCase):
 

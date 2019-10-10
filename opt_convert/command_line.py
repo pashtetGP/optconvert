@@ -1,11 +1,11 @@
 import argparse
 import sys
 from pathlib import Path
-from opt_convert import Converter, Messages
+from opt_convert import Converter, Messages, Model
 
 def parse_args(args):
 
-    supported_formats = Converter.supported_out_formats
+    supported_formats = Model.supported_out_formats
 
     parser = argparse.ArgumentParser(prog='opt_convert',
                                      description='opt_convert converts files of (stochastic) optimization instances.')
@@ -38,12 +38,12 @@ def command_line():
         if not files:
 
             supported_files = []
-            for ext in Converter.supported_in_formats:
+            for ext in Model.supported_in_formats:
                 pathes = cwd.glob(f'*.{ext}')
                 supported_files.extend([path.relative_to(cwd) for path in pathes])
 
             n_supported_files = len(supported_files)
-            files_by_ext = {key: [] for key in Converter.supported_in_formats}
+            files_by_ext = {key: [] for key in Model.supported_in_formats}
             for i, file in enumerate(supported_files):
                 print(f'{i} - {file}')
                 file_ext = file.suffix[1:]
@@ -68,13 +68,13 @@ def command_line():
 
         if out_format is None:
 
-            for i, format in enumerate(Converter.supported_out_formats):
+            for i, format in enumerate(Model.supported_out_formats):
                 print(f'{i} - {format}')
 
             while out_format is None:
                 answer = input('Please choose the output format: ')
                 try:
-                    out_format = Converter.supported_out_formats[answer]
+                    out_format = Model.supported_out_formats[answer]
                 except:
                     print(Messages.MSG_INPUT_WRONG_INDEX)
 
@@ -83,13 +83,16 @@ def command_line():
             converter = Converter(file, out_format)
             try:
                 converter.run()
-            except ValueError as e:
+            except FileNotFoundError as e:
                 result = e
                 print(file, e)
                 if str(e) == Messages.MSG_INSTANCE_FILE_NOT_FOUND:
                     # reset file info to choose it interactively later
                     files = []
-                elif e == Messages.MSG_OUT_FORMAT_NOT_SUPPORTED:
+            except ValueError as e:
+                result = e
+                print(file, e)
+                if e == Messages.MSG_OUT_FORMAT_NOT_SUPPORTED:
                     # reset format info to choose it interactively later
                     out_format = None
             else:
