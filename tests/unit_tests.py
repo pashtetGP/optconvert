@@ -1,9 +1,9 @@
 from unittest import TestCase
 from unittest.mock import patch
+from mplpy import ModelResultException
 import sys
-from opt_convert import Converter, Model, parse_args, command_line, Messages
-from argparse import ArgumentError
 from pathlib import Path
+from opt_convert import Converter, Model, parse_args, command_line, Messages, Numbers
 
 Converter.setDebug(True)
 Model.setDebug(True)
@@ -65,11 +65,24 @@ class TestModel(TestCase):
             f = Path(file)
             f.write_text('text')
 
-    def test__init__(self):
-        filename = 'mps_instance'
-        format = 'mps'
+    def test__init_mpl(self):
+        filename = 'Dakota_det'
+        format = 'mpl'
         model = Model(Path(f'{filename}.{format}'))
-        self.assertEqual(model.name, filename)
+        self.assertEqual(model.file.stem, filename)
+
+    def test__init_mpl_wrong(self):
+        filename = 'Dakota_det_wrong'
+        format = 'mpl'
+        with self.assertRaises(ModelResultException) as e:
+            Model(Path(f'{filename}.{format}'))
+        self.assertEqual(str(e.exception)[:88], "The Model.ReadModel(filename='Dakota_det_wrong.mpl') method returned result='ParserError")
+
+    def test__init_lp(self):
+        filename = 'Dakota_det'
+        format = 'lp'
+        model = Model(Path(f'{filename}.{format}'))
+        self.assertEqual(model.file.stem, filename)
 
     def test__init_not_existing_file(self):
         filename = 'mps_instance_na'

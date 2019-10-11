@@ -5,14 +5,14 @@ class Converter:
 
     debug = False
 
-    def __init__(self, file, out_format):
+    def __init__(self, file: str, out_format: str):
         self.file = file
         self.in_format = Path(file).suffix[1:]
         self.out_format = out_format
 
     @classmethod
     def setDebug(cls, debug: bool):
-        print('Debug for converter set to True.')
+        print('Debug for Converter set to True.')
         cls.debug = debug
 
     @classmethod

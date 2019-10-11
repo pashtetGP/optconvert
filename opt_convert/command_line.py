@@ -44,6 +44,7 @@ def command_line():
 
             n_supported_files = len(supported_files)
             files_by_ext = {key: [] for key in Model.supported_in_formats}
+            print('Found these files in folder:')
             for i, file in enumerate(supported_files):
                 print(f'{i} - {file}')
                 file_ext = file.suffix[1:]
@@ -52,7 +53,7 @@ def command_line():
                 if instances:
                     i = i+1
                     supported_files.append(ext)
-                    print(f'{i} - {ext}')
+                    print(f'{i} - all files {ext}')
 
             while not files:
                 answer = input('Please choose the file or extension: ')
@@ -64,7 +65,6 @@ def command_line():
                         files = files_by_ext[ext]
                 except:
                     print(Messages.MSG_INPUT_WRONG_INDEX)
-            # TODO: list of extensions
 
         if out_format is None:
 
