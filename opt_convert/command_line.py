@@ -56,8 +56,9 @@ def command_line():
                     print(f'{i} - all files {ext}')
 
             while not files:
-                answer = input('Please choose the file or extension: ')
+                user_input = input('Please choose the file or extension: ')
                 try:
+                    answer = int(user_input)
                     if answer < n_supported_files: # choose a specific file
                         files.append(supported_files[answer])
                     else: # choose an extension
@@ -72,13 +73,14 @@ def command_line():
                 print(f'{i} - {format}')
 
             while out_format is None:
-                answer = input('Please choose the output format: ')
+                user_input = input('Please choose the output format: ')
                 try:
+                    answer = int(user_input)
                     out_format = Model.supported_out_formats[answer]
                 except:
                     print(Messages.MSG_INPUT_WRONG_INDEX)
 
-        result = True
+        result = None
         for file in files:
             converter = Converter(file, out_format)
             try:
@@ -97,6 +99,7 @@ def command_line():
                     out_format = None
             else:
                 # reset all
+                result = Messages.MSG_FILE_CONVERTED
                 files = []
                 out_format = None
 

@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import TestCase, skip
 from unittest.mock import patch
 from mplpy import ModelResultException
 import sys
@@ -42,7 +42,7 @@ class TestConverter(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        temp_files = []
+        temp_files = ['Dakota_det_converted.mpl']
         for filename in temp_files:
             f = Path(filename)
             if f.is_file():
@@ -103,22 +103,34 @@ class TestModel(TestCase):
             model.save(format=out_format)
         self.assertEqual(str(e.exception), Messages.MSG_OUT_FORMAT_NOT_SUPPORTED)
 
-    def test__save_stochastic(self):
+    def test__save_stochastic_mpl(self):
         filename = 'SNDP_stochastic_MIP'
-        in_format = 'mpl' # only mpl works for for stochastic, MPS does not work
+        in_format = 'mpl'
         out_format = 'mps' # only mps out works
         model = Model(Path(f'{filename}.{in_format}'))
-        print(f'Testing In format: {in_format} Out format: {out_format}')
         model.save(out_format, f'{filename}_converted')
-        model_new = Model(Path(f'{filename}_converted.{out_format}'))
-        self.assertEqual(model_new.solve(), -15250.0)
+
+    def test__save_stochastic_mps(self):
+        filename = 'SNDP_stochastic_MIP'
+        in_format = 'mps'
+        out_format = 'mps' # only mps out works
+        model = Model(Path(f'{filename}.{in_format}'))
+        model.save(out_format, f'{filename}_converted')
 
     def test__save_not_supported_out_stoch_format(self):
-        self.assertTrue(False)
+        filename = 'SNDP_stochastic_MIP'
+        format = 'mpl'
+        out_format = 'lp'
+        model = Model(Path(f'{filename}.{format}'))
+        with self.assertRaises(RuntimeError) as e:
+            model.save(format=out_format)
+        self.assertEqual(str(e.exception), Messages.MSG_STOCH_ONLY_TO_MPS)
 
     @classmethod
     def tearDownClass(cls):
-        for file in ['new_instance.lp', 'Dakota_det_converted.mpl', 'Dakota_det_converted.mps', 'Dakota_det_converted.lp', 'Dakota_det_converted_after_parse_file().mpl', 'Dakota_det_after_parse_file().mpl']:
+        for file in ['new_instance.lp', 'Dakota_det_converted.mpl', 'Dakota_det_converted.mps', 'Dakota_det_converted.lp',
+                     'Dakota_det_converted_after_parse_file().mpl', 'Dakota_det_after_parse_file().mpl',
+                     'SNDP_stochastic_MIP_converted.cor', 'SNDP_stochastic_MIP_converted.sto', 'SNDP_stochastic_MIP_converted.tim']:
             f = Path(file)
             if f.is_file():
                 f.unlink()
@@ -158,6 +170,10 @@ class Test_command_line(TestCase):
         self.assertEqual(parsed.files, [])
         self.assertIs(parsed.out_format, None)
 
+    @skip
+    def test_command_line_manual_enter(self):
+        self.assertTrue(command_line())
+
     @patch('builtins.input', side_effect=['y'])
     def test_command_line(self, input):
         filename = 'Dakota_det.mpl'
@@ -172,24 +188,23 @@ class Test_command_line(TestCase):
         sys.argv = sys.argv + ['--file', filename, '--out_format', format]
         self.assertEqual(str(command_line()), Messages.MSG_INSTANCE_FILE_NOT_FOUND)
 
-    @patch('builtins.input', side_effect=['n', 0, 'y'])
+    @patch('builtins.input', side_effect=['n', '0', 'y'])
     def test_command_line_file_not_exists_ask_againe_answer_file(self, input):
         filename = 'instance_na.mps'
         format = 'sim'
         sys.argv = sys.argv + ['--file', filename, '--out_format', format]
         self.assertTrue(str(command_line()), Messages.MSG_INSTANCE_FILE_NOT_FOUND)
 
-    @patch('builtins.input', side_effect=[100, 0, 'y'])
+    @patch('builtins.input', side_effect=['100', '0', 'y'])
     def test_command_line_no_file_ask_againe_answer_wrong_index(self, input):
         format = 'sim'
         sys.argv = sys.argv + ['--out_format', format]
         self.assertTrue(command_line())
 
-    @patch('builtins.input', side_effect=[4, 'y'])
+    @patch('builtins.input', side_effect=['7', 'y'])
     def test_command_line_no_file_ask_againe_answer_extension(self, input):
         format = 'sim'
         sys.argv = sys.argv + ['--out_format', format]
-        self.assertTrue(4 >= len(self.temp_files)-2, msg='Second mocked value should choose extension.')
         self.assertTrue(command_line())
 
     @patch('builtins.input', side_effect=['y'])
@@ -205,7 +220,9 @@ class Test_command_line(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        for file in cls.temp_files + ['Dakota_det.sim', 'Dakota_det_after_parse_file().mpl']:
+        for file in cls.temp_files \
+                    + ['Dakota_det.sim', 'Dakota_det_after_parse_file().mpl',
+                       'SNDP_stochastic_MIP.cor', 'SNDP_stochastic_MIP.tim', 'SNDP_stochastic_MIP.sto']:
             f = Path(file)
             if f.is_file():
                 f.unlink()

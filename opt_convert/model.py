@@ -1,23 +1,34 @@
 from pathlib import Path
+import shutil
 import re
 from opt_convert import Messages, Numbers
-from mplpy import mpl, ResultType, ModelResultException
+from mplpy import mpl, ResultType, ModelResultException, InputFileType
+
+mpl.Options['MpsCreateAsMin'].Value = 1  # always transform the obj function to min before mps gen
+mpl.Options['MpsIntMarkers'].Value = 1  # use integer markers (instead of UI bound entries)
 
 class Model:
 
     # smps means three files: cor, tim, sto
-    supported_out_formats = ['mpl', 'mps', 'lp', 'smps']
+    # stochastic .mpl can be -> .sto, .cor, .tim only
+    # stochastic .mps can be -> .sto, .cor, .tim only
+    # .sto, .cor, .tim cannot be transformed
     supported_in_formats = ['mpl', 'mps', 'lp']
+    supported_out_formats = ['mps', 'lp', 'xa', 'sim', 'mpl', 'gms', 'mod', 'xml', 'mat', 'c']
+
+    compatible_with_PNB = True
 
     debug = False
 
     def __init__(self, file: Path):
-        self.file = None # defined in read_file()
-        self.format = None # defined in read_file()
-        self.mpl_model = None  # defined in read_file()
-        self.__read_file(file)
+        self.file = None # assigned in read_file()
+        self.format = None # assigned in read_file()
+        self.mpl_model = None  # assigned in read_file()
+        self.stochastic = None # assigned in read_file()
+        self._read_file(file)
+        self.obj_value = None # assigned after solve()
 
-    def __read_file(self, file: Path):
+    def _read_file(self, file: Path):
 
         if self.file is not None:
             raise AttributeError(Messages.MSG_MODEL_READ_FILE_ONLY_ONCE)
@@ -35,39 +46,47 @@ class Model:
             raise ValueError(Messages.MSG_INPUT_FORMAT_NOT_SUPPORTED)
 
         filename = str(self.file)
-        if self.format in ['mpl', 'lp']: # for these formats we can create an mpl_model
-            self.mpl_model = mpl.Models.Add(filename)
-            try:
-                if self.format in ['mpl']: # these formats can be nativaly read with mpl.Model.ReadModel()
-                    result = self.mpl_model.ReadModel(filename)
-                elif self.format in ['lp']: # these formats are first tansformed to mpl as text and then read by mpl.Model with ParseModel()
-                    result = self.parse_file()
-            except ModelResultException as e:
-                raise e
-            if result != ResultType.Success:
-                raise ModelResultException(result.ErrorMessage)
-        elif self.format == 'mps': # TODO: MPL can natively read mpl and mps files
-            pass
-        elif self.format == 'smps':
-            pass
-        else:
-            assert(False and Messages.MSG_INPUT_FORMAT_NOT_SUPPORTED)
+
+        if self.format == 'mps':
+            text = self.file.read_text()
+            lines = text.split('\n')
+            n_stoch_keywords = 0
+            for line in lines:
+                if any(keyword in line for keyword in ['STOCH', 'TIME', 'SCENARIOS']):
+                    n_stoch_keywords += 1
+                if n_stoch_keywords >= 3:
+                    self.stochastic = True
+                    return
+
+        try:
+            if self.format in ['mpl', 'mps']: # these formats can be natively read with mpl.Model.ReadModel()
+                self.mpl_model = mpl.Models.Add(filename)
+                result = self.mpl_model.ReadModel(filename)
+            elif self.format in ['lp']: # these formats are first tansformed to mpl as text and then read by mpl.Model with ParseModel()
+                result = self._parse_file()
+        except ModelResultException as e:
+            raise e
+        if result != ResultType.Success:
+            raise ModelResultException(result.ErrorMessage)
+
+        if self.mpl_model.Matrix.ConStageCount:
+            self.stochastic = True
 
         if self.isDebug():
             print(f'Read file {self.file}')
 
-    def parse_file(self):
+    def _parse_file(self):
 
         if self.format == 'lp':
-            mpl_string = self.parse_lp()
+            mpl_string = self._parse_lp()
         else:
             raise ValueError(Messages.MSG_MODEL_NO_PARSING_FOR_FORMAT)
 
+        self.mpl_model = mpl.Models.Add(str(self.file))
         return self.mpl_model.ParseModel(mpl_string)
 
-    def parse_lp(self):
-        # TODO: implement (for bounds)
-        # TODO: this is cplex format
+    def _parse_lp(self):
+        # This is cplex format
         # About CPLEX lp format: http://lpsolve.sourceforge.net/5.1/CPLEX-format.htm
         lp_string = self.file.read_text()
         lines = lp_string.split('\n')
@@ -172,21 +191,108 @@ class Model:
 
         return mpl_string
 
+    def _mps2three(self, temp_file, filename):
+        lines_in_files = {'cor': [], 'tim': [], 'sto': []}
+        text = Path(temp_file).read_text()
+        lines = text.split('\n')
+
+        current_file_lines = 'cor'
+        for line in lines:
+            if current_file_lines == 'cor' and 'TIME' in line: # TIME block should go after COR
+                current_file_lines = 'tim'
+            elif current_file_lines == 'tim' and 'STOCH' in line:  # STOCH block should go after TIME
+                current_file_lines = 'sto'
+            elif 'EXPLICIT' in line and Model.compatible_with_PNB and current_file_lines == 'sto':
+                raise RuntimeError(Messages.MSG_EXPLICIT_IN_MPS)
+
+            lines_in_files[current_file_lines].append(line)
+
+        for extension in ['cor', 'tim', 'sto']:
+            contents = lines_in_files[extension]
+            if extension in ['cor', 'tim']:
+                contents.append('ENDATA')
+
+            file = Path(f'{filename}.{extension}')
+            file.write_text('\n'.join(contents))
+
+        # Delete the file
+        Path(temp_file).unlink()
+
     def save(self, format=None, name=None):
+
+        format_dict = {
+            'mps': InputFileType.Mps,
+            'lp': InputFileType.Cplex,
+            'xa': InputFileType.Xa,
+            'sim': InputFileType.TSimplex,
+            'mpl': InputFileType.Mpl,
+            'gms': InputFileType.Gams,
+            'mod': InputFileType.Ampl,
+            'xml': InputFileType.OptML,
+            'mat': InputFileType.Matlab,
+            'c': InputFileType.CDef
+        }
 
         if format == None:
             format = self.format
         if name == None:
-            name = self.filename
+            name = self.file.stem
+        filename = f'{name}.{format}'
 
         if not format in Model.supported_out_formats:
             raise ValueError(Messages.MSG_OUT_FORMAT_NOT_SUPPORTED)
 
-        # save_model
+        if self.stochastic:
+            if format not in ['mps']:
+                raise RuntimeError(Messages.MSG_STOCH_ONLY_TO_MPS)
+            elif self.format == 'mpl':
+                self.mpl_model.WriteInputFile(str(self.file.stem)+'_temp', format_dict['mps']) # save temp .mps file
+            elif self.format == 'mps':
+                shutil.copy(str(self.file), str(self.file.stem)+'_temp.mps')
+            self._mps2three(str(self.file.stem) + '_temp.mps', name)
+        elif not self.mpl_model:
+            raise RuntimeError(Messages.MSG_NO_MPL_MODEL_CANNOT_SAVE)
+        else:
+            self.mpl_model.WriteInputFile(filename, format_dict[format])
+
+        # Bug in MPL with binary vars (added to INTEGERS block)
+        if format == 'lp':
+            lines = Path(filename).read_text().splitlines()
+            processed_lines = []
+            vector_bins = []
+            for vector in self.mpl_model.VariableVectors: # vector.Type is often None (not set) and can't be used
+                vector_bins.extend([var.Name for var in vector if var.IsBinary])
+            plain_bins = [var.Name for var in self.mpl_model.PlainVariables if var.IsBinary]
+            bin_vars = vector_bins + plain_bins
+            if bin_vars:
+                end_line_index = None
+                for line in lines:
+                    if 'END' == line.strip().upper():
+                        end_line_index = len(processed_lines)
+                    if not any([var_name == line.strip() for var_name in bin_vars]):
+                        processed_lines.append(line)
+                processed_lines.insert(end_line_index, 'BINARY')
+                for i, var in enumerate(bin_vars, 1):
+                    processed_lines.insert(end_line_index + i, var)
+                processed_lines.insert(end_line_index + i + 1, '') # blank line after BINARY block
+                Path(filename).write_text('\n'.join(processed_lines))
+
         if self.isDebug():
-            print(f'Saved file {name}.{format}')
+            if self.stochastic and format == 'mps':
+                print(f'Saved files {name}.cor, .sto, .tim')
+            else:
+                print(f'Saved file {name}.{format}')
 
         return True
+
+    def solve(self):
+
+        if self.mpl_model:
+            self.mpl_model.Solve()
+            self.obj_value = self.mpl_model.Solution.ObjectValue
+            return self.obj_value
+        else:
+            raise RuntimeError(Messages.MSG_NO_MPL_MODEL_CANNOT_SOLVE)
 
     @classmethod
     def setDebug(cls, debug: bool):

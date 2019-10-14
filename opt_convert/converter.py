@@ -5,10 +5,14 @@ class Converter:
 
     debug = False
 
-    def __init__(self, file: str, out_format: str):
+    def __init__(self, file: str, out_format: str, name=None):
         self.file = file
         self.in_format = Path(file).suffix[1:]
         self.out_format = out_format
+        if name is None:
+            self.name = Path(file).stem
+        else:
+            self.name = name
 
     @classmethod
     def setDebug(cls, debug: bool):
@@ -26,7 +30,7 @@ class Converter:
 
         try:
             model = Model(Path(self.file))
-            model.save(self.out_format)
+            model.save(self.out_format, self.name)
         except Exception as e:
             raise e
 
