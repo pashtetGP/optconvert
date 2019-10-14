@@ -4,26 +4,27 @@
 \   Generated with the MPL Modeling System
 \   Copyright (c) 1988-2018  Maximal Software
 \   
-\   Date:               October 11, 2019
-\   Time:               16:39
+\   Date:               October 14, 2019
+\   Time:               17:26
 \   
 \   Constraints:        6
-\   Variables:          7
-\   Integers:           4
+\   Variables:          10
+\   Integers:           7
 \   Nonzeros:           15
-\   Density:            36 %
+\   Density:            25 %
 \   
 
 
 MAXIMIZE
-  Profit:  - 2 PurchaseLum - 4 PurchaseFin - 5.2 PurchaseCar
-     + 60 ProductionDes + 40 ProductionTab + 10 ProductionCha
-     + BinaryVar - 1.0
+  Profit:  BinVecDes + BinVecTab + BinVecCha - 2 PurchaseLum
+     - 4 PurchaseFin - 5.2 PurchaseCar + 60 ProductionDes
+     + 40 ProductionTab + 10 ProductionCha + BinaryVar
 
 SUBJECT TO
   ResourceConstLum:   - PurchaseLum + 8 ProductionDes + 6 ProductionTab
      + ProductionCha  <=  0
-  - PurchaseFin + 4 ProductionDes + 2 ProductionTab + 1.5 ProductionCha  <=  0
+  - PurchaseFin + 4 ProductionDes + 2 ProductionTab
+     + 1.5 ProductionCha  <=  0
   ResourceConstCar:   - PurchaseCar + 2 ProductionDes
      + 1.5 ProductionTab + 0.5 ProductionCha  <=  0
   DemandConstraDes:   ProductionDes  <=  150
@@ -41,6 +42,9 @@ INTEGERS
     ProductionCha
 
 BINARY
+    BinVecDes
+    BinVecTab
+    BinVecCha
     BinaryVar
 
 END
