@@ -1,8 +1,9 @@
 from pathlib import Path
 import shutil
 import re
-from opt_convert import Messages, Numbers
+from opt_convert import Messages, Numbers, InputFormatNotSupportedError, ExplicitInMpsError, OutFormatNotSupported
 from mplpy import mpl, ResultType, ModelResultException, InputFileType
+# TODO: continue line 245
 
 mpl.Options['MpsCreateAsMin'].Value = 1  # always transform the obj function to min before mps gen
 mpl.Options['MpsIntMarkers'].Value = 1  # use integer markers (instead of UI bound entries)
@@ -31,10 +32,10 @@ class Model:
     def _read_file(self, file: Path):
 
         if self.file is not None:
-            raise AttributeError(Messages.MSG_MODEL_READ_FILE_ONLY_ONCE)
+            raise RuntimeError(Messages.MSG_MODEL_READ_FILE_ONLY_ONCE)
 
         if not isinstance(file, Path):
-            raise AttributeError(Messages.MSG_FILE_SHOULD_BE_PATH)
+            raise ValueError(Messages.MSG_FILE_SHOULD_BE_PATH)
 
         self.file = file
         self.format = file.suffix[1:]
@@ -43,7 +44,7 @@ class Model:
             raise FileNotFoundError(Messages.MSG_INSTANCE_FILE_NOT_FOUND)
 
         if not self.format in Model.supported_in_formats:
-            raise ValueError(Messages.MSG_INPUT_FORMAT_NOT_SUPPORTED)
+            raise InputFormatNotSupportedError(Messages.MSG_INPUT_FORMAT_NOT_SUPPORTED)
 
         filename = str(self.file)
 
@@ -61,13 +62,11 @@ class Model:
         try:
             if self.format in ['mpl', 'mps']: # these formats can be natively read with mpl.Model.ReadModel()
                 self.mpl_model = mpl.Models.Add(filename)
-                result = self.mpl_model.ReadModel(filename)
+                self.mpl_model.ReadModel(filename)
             elif self.format in ['lp']: # these formats are first tansformed to mpl as text and then read by mpl.Model with ParseModel()
-                result = self._parse_file()
+                self._parse_file()
         except ModelResultException as e:
-            raise e
-        if result != ResultType.Success:
-            raise ModelResultException(result.ErrorMessage)
+            raise RuntimeError(e)
 
         if self.mpl_model.Matrix.ConStageCount:
             self.stochastic = True
@@ -203,7 +202,7 @@ class Model:
             elif current_file_lines == 'tim' and 'STOCH' in line:  # STOCH block should go after TIME
                 current_file_lines = 'sto'
             elif 'EXPLICIT' in line and Model.compatible_with_PNB and current_file_lines == 'sto':
-                raise RuntimeError(Messages.MSG_EXPLICIT_IN_MPS)
+                raise ExplicitInMpsError(Messages.MSG_EXPLICIT_IN_MPS)
 
             lines_in_files[current_file_lines].append(line)
 
@@ -240,7 +239,7 @@ class Model:
         filename = f'{name}.{format}'
 
         if not format in Model.supported_out_formats:
-            raise ValueError(Messages.MSG_OUT_FORMAT_NOT_SUPPORTED)
+            raise OutFormatNotSupported(Messages.MSG_OUT_FORMAT_NOT_SUPPORTED)
 
         if self.stochastic:
             if format not in ['mps']:

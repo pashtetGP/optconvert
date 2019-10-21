@@ -44,7 +44,11 @@ def command_line():
 
             n_supported_files = len(supported_files)
             files_by_ext = {key: [] for key in Model.supported_in_formats}
-            print('Found these files in folder:')
+            if n_supported_files:
+                print('Found these files in folder:')
+            else:
+                print('No supported files found in the directory. cd to the directory with the files.')
+                return result
             for i, file in enumerate(supported_files):
                 print(f'{i} - {file}')
                 file_ext = file.suffix[1:]
@@ -56,7 +60,9 @@ def command_line():
                     print(f'{i} - all files {ext}')
 
             while not files:
-                user_input = input('Please choose the file or extension: ')
+                user_input = input('Please choose the file, extension or <exit>: ')
+                if user_input == 'exit':
+                    return result
                 try:
                     answer = int(user_input)
                     if answer < n_supported_files: # choose a specific file
@@ -73,7 +79,9 @@ def command_line():
                 print(f'{i} - {format}')
 
             while out_format is None:
-                user_input = input('Please choose the output format: ')
+                user_input = input('Please choose the output format or <exit>: ')
+                if user_input == 'exit':
+                    return result
                 try:
                     answer = int(user_input)
                     out_format = Model.supported_out_formats[answer]
@@ -84,27 +92,22 @@ def command_line():
         for file in files:
             converter = Converter(file, out_format)
             try:
-                converter.run()
-            except FileNotFoundError as e:
+                result = converter.run()
+                print(f'File {file} converted to format {out_format}.')
+            except (FileNotFoundError, RuntimeError) as e:
                 result = e
                 print(file, e)
-                if str(e) == Messages.MSG_INSTANCE_FILE_NOT_FOUND:
-                    # reset file info to choose it interactively later
-                    files = []
             except ValueError as e:
                 result = e
                 print(file, e)
                 if e == Messages.MSG_OUT_FORMAT_NOT_SUPPORTED:
-                    # reset format info to choose it interactively later
-                    out_format = None
-            else:
-                # reset all
-                result = Messages.MSG_FILE_CONVERTED
-                files = []
-                out_format = None
+                    break
 
         answer = input('Exit (y/n)? ')
         if answer == 'y':
             quit = True
+        else:
+            files = []
+            out_format = None
 
     return result

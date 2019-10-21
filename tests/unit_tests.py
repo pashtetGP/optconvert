@@ -64,7 +64,7 @@ class TestModel(TestCase):
     def test__init_wrong(self):
         filename = 'Dakota_det_wrong'
         format = 'mpl'
-        with self.assertRaises(ModelResultException) as e:
+        with self.assertRaises(RuntimeError) as e:
             Model(Path(f'{filename}.{format}'))
         self.assertEqual(str(e.exception)[:88], "The Model.ReadModel(filename='Dakota_det_wrong.mpl') method returned result='ParserError")
 
@@ -179,7 +179,7 @@ class Test_command_line(TestCase):
         filename = 'Dakota_det.mpl'
         format = 'sim'
         sys.argv = sys.argv + ['--file', filename, '--out_format', format]
-        self.assertEqual(command_line(), Messages.MSG_FILE_CONVERTED)
+        self.assertTrue(command_line())
 
     @patch('builtins.input', side_effect=['y'])
     def test_command_line_file_not_exists(self, input):
@@ -188,7 +188,7 @@ class Test_command_line(TestCase):
         sys.argv = sys.argv + ['--file', filename, '--out_format', format]
         self.assertEqual(str(command_line()), Messages.MSG_INSTANCE_FILE_NOT_FOUND)
 
-    @patch('builtins.input', side_effect=['n', '0', 'y'])
+    @patch('builtins.input', side_effect=['n', '0', 'exit'])
     def test_command_line_file_not_exists_ask_againe_answer_file(self, input):
         filename = 'instance_na.mps'
         format = 'sim'
