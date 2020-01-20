@@ -102,7 +102,7 @@ class Model:
                        'SUBJECT TO': ['SUBJECT TO', 'SUCH THAT', 'ST', 'S.T.'],
                        'BOUNDS': ['BOUNDS', 'BOUND'],
                        'INTEGER': ['INTEGERS', 'GENERAL'],
-                       'BINARY': ['BINARY']}
+                       'BINARY': ['BINARY', 'BINARIES']}
         for line in lines:
 
             # skip empty lines
