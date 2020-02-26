@@ -6,13 +6,14 @@ from mplpy import mpl, ResultType, ModelResultException, InputFileType
 # TODO: continue line 245
 
 mpl.Options['MpsCreateAsMin'].Value = 1  # always transform the obj function to min before mps gen
-mpl.Options['MpsIntMarkers'].Value = 1  # use integer markers (instead of UI bound entries)
+mpl.Options['MpsIntMarkers'].Value = 0  # use UI bound entries (instead of integer markers), otherwise, BUG: all ints/bins are assigned to the 1st stage and all integers w/o UB are considered to be bins in SmiScnData
+mpl.Options['MpsDefUIBound'].Value = Numbers.INT_BIG_NUMBER # UB to use for int var with inf UB
 
 class Model:
 
     # smps means three files: cor, tim, sto
-    # stochastic .mpl can be -> .sto, .cor, .tim only
-    # stochastic .mps can be -> .sto, .cor, .tim only
+    # stochastic .mpl can be transformed to .sto, .cor, .tim only
+    # stochastic .mps can be transformed to .sto, .cor, .tim only
     # .sto, .cor, .tim cannot be transformed
     supported_in_formats = ['mpl', 'mps', 'lp']
     supported_out_formats = ['mps', 'lp', 'xa', 'sim', 'mpl', 'gms', 'mod', 'xml', 'mat', 'c']
@@ -246,7 +247,7 @@ class Model:
                 raise RuntimeError(Messages.MSG_STOCH_ONLY_TO_MPS)
             elif self.format == 'mpl':
                 self.mpl_model.WriteInputFile(str(self.file.stem)+'_temp', format_dict['mps']) # save temp .mps file
-            elif self.format == 'mps':
+            elif self.format == 'mps': # stochastic mps is not parsed as mpl_model bust still can be converted
                 shutil.copy(str(self.file), str(self.file.stem)+'_temp.mps')
             self._mps2three(str(self.file.stem) + '_temp.mps', name)
         elif not self.mpl_model:

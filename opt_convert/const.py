@@ -19,7 +19,7 @@ class Messages:
 
 class Numbers:
 
-    INT_BIG_NUMBER = 900000000000000000000
+    INT_BIG_NUMBER = 100000000000000000000
 
 class OutFormatNotSupported(RuntimeError):
     pass
