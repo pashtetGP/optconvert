@@ -1,0 +1,22 @@
+! Vector_c[FirstStCol]
+1, 1
+! Vector_d[SecondStCol]
+1, 1, 2, 2, 3, 3
+! Vector_b
+156
+! Matrix_A[FirstStCol]
+200, 300
+! Matrix_T[Row, FirstStCol]
+11, 12
+21, 22
+31, 32
+41, 42
+51, 52
+! Matrix_W[Row, SecondStCol]
+11, 11, 12, 12, 13, 13
+21, 21, 22, 22, 23, 23
+31, 31, 32, 32, 33, 33
+41, 41, 42, 42, 43, 43
+51, 51, 52, 52, 53, 53
+! Vector x_ub[FirstStCol]
+1, 1

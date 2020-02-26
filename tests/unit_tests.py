@@ -16,6 +16,12 @@ class TestConverter(TestCase):
         converter = Converter(filename, format, 'Dakota_det_converted')
         self.assertTrue(converter.run())
 
+    def test_run_CAP(self):
+        filename = 'cap_test_5.mpl'
+        format = 'mps'
+        converter = Converter(filename, format, 'cap_test_5')
+        self.assertTrue(converter.run())
+
     def test_run_no_file(self):
         filename = 'instance_1.mps'
         format = 'mpl'
