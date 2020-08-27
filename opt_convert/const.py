@@ -20,12 +20,3 @@ class Messages:
 class Numbers:
 
     INT_BIG_NUMBER = 100000000000000000000
-
-class OutFormatNotSupported(RuntimeError):
-    pass
-
-class InputFormatNotSupportedError(RuntimeError):
-    pass
-
-class ExplicitInMpsError(RuntimeError):
-    pass

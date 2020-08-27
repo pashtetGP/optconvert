@@ -1,9 +1,9 @@
 from pathlib import Path
+import os
 import shutil
 import re
-from opt_convert import Messages, Numbers, InputFormatNotSupportedError, ExplicitInMpsError, OutFormatNotSupported
+from opt_convert import Messages, Numbers
 from mplpy import mpl, ResultType, ModelResultException, InputFileType
-# TODO: continue line 245
 
 mpl.Options['MpsCreateAsMin'].Value = 1  # always transform the obj function to min before mps gen
 mpl.Options['MpsIntMarkers'].Value = 0  # use UI bound entries (instead of integer markers), otherwise, BUG: all ints/bins are assigned to the 1st stage and all integers w/o UB are considered to be bins in SmiScnData
@@ -45,7 +45,7 @@ class Model:
             raise FileNotFoundError(Messages.MSG_INSTANCE_FILE_NOT_FOUND)
 
         if not self.format in Model.supported_in_formats:
-            raise InputFormatNotSupportedError(Messages.MSG_INPUT_FORMAT_NOT_SUPPORTED)
+            raise RuntimeError(Messages.MSG_INPUT_FORMAT_NOT_SUPPORTED)
 
         filename = str(self.file)
 
@@ -218,7 +218,7 @@ class Model:
         # Delete the file
         Path(temp_file).unlink()
 
-    def save(self, format=None, name=None):
+    def export(self, format=None, name=None):
 
         format_dict = {
             'mps': InputFileType.Mps,
@@ -240,13 +240,13 @@ class Model:
         filename = f'{name}.{format}'
 
         if not format in Model.supported_out_formats:
-            raise OutFormatNotSupported(Messages.MSG_OUT_FORMAT_NOT_SUPPORTED)
+            raise RuntimeError(Messages.MSG_OUT_FORMAT_NOT_SUPPORTED)
 
         if self.stochastic:
             if format not in ['mps']:
                 raise RuntimeError(Messages.MSG_STOCH_ONLY_TO_MPS)
             elif self.format == 'mpl':
-                self.mpl_model.WriteInputFile(str(self.file.stem)+'_temp', format_dict['mps']) # save temp .mps file
+                self.mpl_model.WriteInputFile(str(self.file.stem)+'_temp', format_dict['mps']) # export temp .mps file
             elif self.format == 'mps': # stochastic mps is not parsed as mpl_model bust still can be converted
                 shutil.copy(str(self.file), str(self.file.stem)+'_temp.mps')
             self._mps2three(str(self.file.stem) + '_temp.mps', name)
@@ -293,6 +293,9 @@ class Model:
             return self.obj_value
         else:
             raise RuntimeError(Messages.MSG_NO_MPL_MODEL_CANNOT_SOLVE)
+
+    def data_as_dict(self):
+        raise NotImplementedError() # see MplWithExtData set_ext_data() for format and SndpGraph()
 
     @classmethod
     def setDebug(cls, debug: bool):

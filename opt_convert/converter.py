@@ -30,7 +30,7 @@ class Converter:
 
         try:
             model = Model(Path(self.file))
-            model.save(self.out_format, self.name)
+            model.export(self.out_format, self.name)
         except Exception as e:
             raise e
 

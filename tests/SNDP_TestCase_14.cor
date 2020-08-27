@@ -1,0 +1,65 @@
+*   
+*   SNDP_TestCase_14_temp.mps
+*   
+*   Generated with the MPL Modeling System
+*   Copyright (c) 1988-2018  Maximal Software
+*   
+*   Date:               February 26, 2020
+*   Time:               18:45
+*   
+*   Constraints:        12
+*   Variables:          10
+*   Integers:           5
+*   Nonzeros:           28
+*   Density:            23 %
+*   
+NAME          SNDP_TestCase_14 (MIN)
+ROWS
+  N Obj
+  G c1
+  G c2
+  G c3
+  G c4
+  G c5
+  G c6
+  G c7
+  G c8
+  G c9
+  G c10
+  G c11
+  G c12
+COLUMNS
+    INTEGERS  'MARKER'                 'INTORG'
+    yc2       Obj             2000.0   c9              5000.0
+    yc3       Obj             2000.0   c10             5000.0
+    x_b13     Obj                2.0   c7                 1.0
+    x_b13     c8                -1.0   c12               -1.0
+    x_a32     Obj                1.0   c1                 1.0
+    x_a32     c2                -1.0
+    x_a33     Obj                0.0   c3                 1.0
+    x_a33     c4                -1.0   c12               -1.0
+    INTEGERE  'MARKER'                 'INTEND'
+    x_c24     Obj              -11.0   c1                -2.0
+    x_c24     c2                 2.0   c5                -3.0
+    x_c24     c6                 3.0   c9                -1.0
+    x_c24     c11               -1.0
+    x_c34     Obj              -10.0   c3                -2.0
+    x_c34     c4                 2.0   c7                -3.0
+    x_c34     c8                 3.0   c10               -1.0
+    x_c34     c11               -1.0
+    x_a12     Obj                2.0   c1                 1.0
+    x_a12     c2                -1.0
+    x_b12     Obj                2.0   c5                 1.0
+    x_b12     c6                -1.0
+    x_a13     Obj                2.0   c3                 1.0
+    x_a13     c4                -1.0
+RHS
+    RHS1      c11            -5000.0   c12           -24500.5
+BOUNDS
+ UP BOUND1    yc2                1.0
+ UP BOUND1    yc3                1.0
+ UP BOUND1    x_b13            100.0
+ UP BOUND1    x_a32            100.0
+ UP BOUND1    x_a33            100.0
+*
+ENDATA
