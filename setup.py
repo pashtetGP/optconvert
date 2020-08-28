@@ -2,21 +2,25 @@ from setuptools import setup, find_packages
 import os
 
 INSTALL_REQUIRES = []
-#INSTALL_REQUIRES.append('mplpy')
+INSTALL_REQUIRES.append('scipy') # for mplpy
+INSTALL_REQUIRES.append('matplotlib') # for mplpy
+INSTALL_REQUIRES.append('wxPython') # for mplpy
+INSTALL_REQUIRES.append('mplpy') # for opt_convert
+INSTALL_REQUIRES.append('mplpy')
 
 license='MIT'
 if os.path.exists('LICENSE'):
   license = open('LICENSE').read()
 
 long_description = """
-    The Python package and command line utility for transforming .mpl, .lp, .mps data files to .mps, .lp, .xa, .mpl, mod and other.
+    The Python package and command line utility for transforming mathematical optimization models defined in .mpl, .lp, .mps file formats to .mps, .lp, .xa, .mpl, .mod and other formats.
     https://github.com/pashtetgp/opt_convert - README
   """
 
 setup(name='opt_convert',
       version='0.0.1',
       python_requires='>=3.6', # does not work for some reason
-      description='Converter for mathematical optimization formats: .mpl, .lp, .mps -> .mps, .lp, .xa, .mpl, mod etc.',
+      description='Converter for mathematical optimization formats: .mpl, .lp, .mps -> .mps, .lp, .xa, .mpl, .mod etc.',
       long_description=long_description,
       keywords='converter mathematical optimization mps',
       author='Pavlo Glushko',

@@ -1,12 +1,10 @@
-from unittest import TestCase, skip
+from unittest import TestCase, TestLoader, TextTestRunner, skip
 from unittest.mock import patch
-from mplpy import ModelResultException
 import sys
 from pathlib import Path
-from opt_convert import Converter, Model, MplWithExtData, parse_args, command_line, Messages, Numbers
+import shutil
+from opt_convert import Converter, Model, MplWithExtData, parse_args, command_line, Messages
 
-Converter.setDebug(True)
-Model.setDebug(True)
 
 class TestConverter(TestCase):
 
@@ -48,7 +46,7 @@ class TestConverter(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        temp_files = ['Dakota_det_converted.mpl']
+        temp_files = ['Dakota_det_converted.mpl', 'cap_test_5.cor', 'cap_test_5.STO', 'cap_test_5.TIM']
         for filename in temp_files:
             f = Path(filename)
             if f.is_file():
@@ -60,35 +58,36 @@ class TestModel(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.initial_argv = sys.argv
+        Path('temp_subfolder').mkdir(parents=True, exist_ok=True)
 
-    def test__init(self):
+    def test_init(self):
         filename = 'Dakota_det'
         for format in ['lp', 'mpl', 'mps']:
             model = Model(Path(f'{filename}.{format}'))
             self.assertEqual(abs(model.solve()), 4169.0)
 
-    def test__init_wrong(self):
+    def test_init_wrong(self):
         filename = 'Dakota_det_wrong'
         format = 'mpl'
         with self.assertRaises(RuntimeError) as e:
             Model(Path(f'{filename}.{format}'))
         self.assertEqual(str(e.exception)[:88], "The Model.ReadModel(filename='Dakota_det_wrong.mpl') method returned result='ParserError")
 
-    def test__init_not_existing_file(self):
+    def test_init_not_existing_file(self):
         filename = 'mps_instance_na'
         format = 'mps'
         with self.assertRaises(FileNotFoundError) as e:
             Model(Path(f'{filename}.{format}'))
         self.assertEqual(str(e.exception), Messages.MSG_INSTANCE_FILE_NOT_FOUND)
 
-    def test__init_not_supported_in_file(self):
+    def test_init_not_supported_in_file(self):
         filename = 'Dakota_det'
         format = 'trk'
         with self.assertRaises(RuntimeError) as e:
             Model(Path(f'{filename}.{format}'))
         self.assertEqual(str(e.exception), Messages.MSG_INPUT_FORMAT_NOT_SUPPORTED)
 
-    def test__save(self):
+    def test_export(self):
         filename = 'Dakota_det'
         in_formats = ['mpl', 'mps', 'lp']
         out_formats = ['mpl', 'mps', 'lp']
@@ -96,40 +95,53 @@ class TestModel(TestCase):
             model = Model(Path(f'{filename}.{in_format}'))
             for out_format in out_formats:
                 print(f'Testing In format: {in_format} Out format: {out_format}')
-                model.export(out_format, f'{filename}_converted')
+                model.export(Path(f'{filename}_converted.{out_format}'))
                 model_new = Model(Path(f'{filename}_converted.{out_format}'))
                 self.assertEqual(abs(model_new.solve()), 4169.0)
 
-    def test_save_not_supported_out_format(self):
+    def test_export_subfolder(self):
+        filename = 'Dakota_det'
+        out_file = 'temp_subfolder//Dakota_det'
+        in_formats = ['mpl', 'mps', 'lp']
+        out_formats = ['mpl', 'mps', 'lp']
+        for in_format in in_formats:
+            model = Model(Path(f'{filename}.{in_format}'))
+            for out_format in out_formats:
+                print(f'Testing In format: {in_format} Out format: {out_format}')
+                model.export(Path(f'{out_file}_converted.{out_format}'))
+                model_new = Model(Path(f'{out_file}_converted.{out_format}'))
+                self.assertEqual(abs(model_new.solve()), 4169.0)
+
+    def test_export_not_supported_out_format(self):
         filename = 'Dakota_det'
         format = 'mpl'
         out_format = 'trk'
         model = Model(Path(f'{filename}.{format}'))
         with self.assertRaises(RuntimeError) as e:
-            model.export(format=out_format)
+            model.export(Path(f'{filename}_unsupported.{out_format}'))
         self.assertEqual(str(e.exception), Messages.MSG_OUT_FORMAT_NOT_SUPPORTED)
 
-    def test__save_stochastic_mpl(self):
+    def test_export_stochastic_mpl(self):
         filename = 'SNDP_stochastic_MIP'
         in_format = 'mpl'
         out_format = 'mps' # only mps out works
         model = Model(Path(f'{filename}.{in_format}'))
-        model.export(out_format, f'{filename}_converted')
+        model.export(Path(f'{filename}_converted.{out_format}'))
 
-    def test__save_stochastic_mps(self):
+    def test_export_stochastic_mps(self):
         filename = 'SNDP_stochastic_MIP'
         in_format = 'mps'
         out_format = 'mps' # only mps out works
         model = Model(Path(f'{filename}.{in_format}'))
-        model.export(out_format, f'{filename}_converted')
+        model.export(Path(f'{filename}_converted.{out_format}'))
 
-    def test__save_not_supported_out_stoch_format(self):
+    def test_export_not_supported_out_stoch_format(self):
         filename = 'SNDP_stochastic_MIP'
         format = 'mpl'
         out_format = 'lp'
         model = Model(Path(f'{filename}.{format}'))
         with self.assertRaises(RuntimeError) as e:
-            model.export(format=out_format)
+            model.export(Path(f'{filename}_unsupported.{out_format}'))
         self.assertEqual(str(e.exception), Messages.MSG_STOCH_ONLY_TO_MPS)
 
     @classmethod
@@ -140,6 +152,7 @@ class TestModel(TestCase):
             f = Path(file)
             if f.is_file():
                 f.unlink()
+        shutil.rmtree('temp_subfolder')
 
 
 class TestMplWithExtData(TestCase):
@@ -172,25 +185,27 @@ class TestMplWithExtData(TestCase):
                     'Demand': [{'SCEN': 1, 'value': 1050}]}
         model = MplWithExtData(Path(filename))
         model.set_ext_data(new_data)
-        model.export(name='SNDP_one_scen')
-        model.export('mps', name='SNDP_one_scen')
-        model.export('mps')
+        model.export(Path('SNDP_one_scen.mpl'))
+        model.export(Path('SNDP_one_scen.mps'))
         model.set_ext_data(old_data)
+
+        one_scen_model = MplWithExtData(Path('SNDP_one_scen.mpl'))
+        solution = one_scen_model.solve()
+        self.assertAlmostEqual(2200, solution, delta=0.01)
 
     @classmethod
     def tearDownClass(cls):
         for file in Path().glob("SNDP_one_scen*"):
             file.unlink()
 
-class Test_command_line(TestCase):
+
+class TestCommandLine(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.temp_files = []
+        cls.temp_files = ['Dakota_det.sim', 'Dakota_det_after_parse_file().mpl',
+                       'SNDP_stochastic_MIP.cor', 'SNDP_stochastic_MIP.tim', 'SNDP_stochastic_MIP.sto']
         cls.initial_argv = sys.argv
-        for file in cls.temp_files:
-            f = Path(file)
-            f.write_text('text')
 
     def test_parse_args(self):
         filename = 'mps_instance.mps'
@@ -262,13 +277,18 @@ class Test_command_line(TestCase):
 
     def tearDown(self):
         # reset command line arguments after every test
-        sys.argv = Test_command_line.initial_argv
+        sys.argv = TestCommandLine.initial_argv
 
     @classmethod
     def tearDownClass(cls):
-        for file in cls.temp_files \
-                    + ['Dakota_det.sim', 'Dakota_det_after_parse_file().mpl',
-                       'SNDP_stochastic_MIP.cor', 'SNDP_stochastic_MIP.tim', 'SNDP_stochastic_MIP.sto']:
+        for file in cls.temp_files:
             f = Path(file)
             if f.is_file():
                 f.unlink()
+
+
+if __name__ == '__main__':
+    loader = TestLoader()
+    suite = loader.discover('')
+    runner = TextTestRunner(verbosity=2)
+    runner.run(suite)
