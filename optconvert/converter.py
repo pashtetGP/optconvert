@@ -1,5 +1,5 @@
 from pathlib import Path
-from opt_convert import Messages, Model
+from optconvert import Messages, Model
 
 class Converter:
 

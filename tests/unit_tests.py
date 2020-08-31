@@ -3,7 +3,7 @@ from unittest.mock import patch
 import sys
 from pathlib import Path
 import shutil
-from opt_convert import Converter, Model, MplWithExtData, parse_args, command_line, Messages, Solvers
+from optconvert import Converter, Model, MplWithExtData, parse_args, command_line, Messages, Solvers
 
 
 class TestConverter(TestCase):

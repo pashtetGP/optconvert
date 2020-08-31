@@ -2,7 +2,7 @@ from pathlib import Path
 import os
 import shutil
 import re
-from opt_convert import Messages, Numbers, Solvers
+from optconvert import Messages, Numbers, Solvers
 from mplpy import mpl, ResultType, ModelResultException, InputFileType
 
 mpl.Options['MpsCreateAsMin'].Value = 1  # always transform the obj function to min before mps gen
@@ -52,7 +52,7 @@ class Model:
 
     Examples
     -------
-    from opt_convert import Model
+    from optconvert import Model
     from pathlib import Path
 
     in_file = Path('Dakota_det.mpl')

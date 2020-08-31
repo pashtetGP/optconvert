@@ -1,14 +1,14 @@
 import argparse
 import sys
 from pathlib import Path
-from opt_convert import Converter, Messages, Model
+from optconvert import Converter, Messages, Model
 
 def parse_args(args):
 
     supported_formats = Model.supported_out_formats
 
-    parser = argparse.ArgumentParser(prog='opt_convert',
-                                     description='opt_convert converts files of (stochastic) optimization instances.')
+    parser = argparse.ArgumentParser(prog='optconvert',
+                                     description='optconvert converts files of (stochastic) optimization instances.')
 
     parser.add_argument('--file', default=[], type=str, action='append', dest='files',
                         help="Filename with the extension of the file to convert, e.g., siplib.lp. Default value: None (chose files interactively)")

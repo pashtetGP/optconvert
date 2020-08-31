@@ -5,30 +5,32 @@ INSTALL_REQUIRES = []
 INSTALL_REQUIRES.append('scipy') # for mplpy
 INSTALL_REQUIRES.append('matplotlib') # for mplpy
 INSTALL_REQUIRES.append('wxPython') # for mplpy
-INSTALL_REQUIRES.append('mplpy') # for opt_convert
+INSTALL_REQUIRES.append('mplpy') # for optconvert
 INSTALL_REQUIRES.append('mplpy')
+
+version = '0.0.1'
 
 license='MIT'
 if os.path.exists('LICENSE'):
   license = open('LICENSE').read()
 
-long_description = """
-    The Python package and command line utility for transforming mathematical optimization models defined in .mpl, .lp, .mps file formats to .mps, .lp, .xa, .mpl, .mod and other formats.
-    https://github.com/pashtetgp/opt_convert - README
-  """
+with open("README.md", "r") as fh:
+    long_description = fh.read()
 
-setup(name='opt_convert',
-      version='0.0.1',
+setup(name='optconvert',
+      version=version,
       python_requires='>=3.6', # does not work for some reason
-      description='Converter for mathematical optimization formats: .mpl, .lp, .mps -> .mps, .lp, .xa, .mpl, .mod etc.',
+      description='Converter for mathematical optimization formats: .mpl, .lp, .xa, .sim, .mpl, .gms, .mod, .xml, .mat.',
       long_description=long_description,
+      long_description_content_type="text/markdown",
       keywords='converter mathematical optimization mps',
       author='Pavlo Glushko',
       author_email='pavloglushko@gmail.com',
-      url='https://github.com/pashtetgp/opt_convert',
-      download_url='https://github.com/pashtetgp/opt_convert/tarball/0.0.1',
+      url='https://github.com/pashtetgp/optconvert',
+      download_url=f'https://github.com/pashtetGP/optconvert/archive/{version}.tar.gz',
       license=license,
-      packages=find_packages(),      classifiers=[
+      packages=find_packages(),
+      classifiers=[
         'Environment :: Console',
         'Intended Audience :: Science/Research',
         'Natural Language :: English',
@@ -43,7 +45,7 @@ setup(name='opt_convert',
       include_package_data=True, # files from MANIFEST.in
       test_suite='tests',
       entry_points = {
-        'console_scripts': ['opt_convert=opt_convert.command_line:command_line'],
+        'console_scripts': ['optconvert=optconvert.command_line:command_line'],
       },
       install_requires=INSTALL_REQUIRES
 )

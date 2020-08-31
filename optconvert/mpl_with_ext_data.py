@@ -1,5 +1,5 @@
 from pathlib import Path
-from opt_convert import Model
+from optconvert import Model
 
 
 class _DataItem():
