@@ -28,9 +28,9 @@ VARIABLES
    Production[PRODUCTS];
    BinaryVar;
 
-MAX
+MIN
 
-    Profit = sum(PRODUCTS: Price * Production) - sum(RESOURCES: Cost * Purchase) + BinaryVar + sum(PRODUCTS: BinVec);
+    Profit = -sum(PRODUCTS: Price * Production) + sum(RESOURCES: Cost * Purchase) - BinaryVar - sum(PRODUCTS: BinVec);
 
 SUBJECT TO
 

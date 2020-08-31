@@ -1,5 +1,3 @@
-import math
-
 class Messages:
 
     MSG_OUT_FORMAT_NOT_SUPPORTED = 'Output file format is not supported.'
@@ -17,6 +15,21 @@ class Messages:
     First stage constraints in .mpl should be defined before the second stage constraints.\n
     Otherwise, .tim file has a wrong format (SCENARIOS EXPLICIT) and the solver mixes up 1st, 2nd stage constraints.'''
 
+
 class Numbers:
 
     INT_BIG_NUMBER = 100000000000000000000
+
+
+class Solvers:
+
+    COIN_MP = 'CoinMP'
+    CPLEX = 'CPLEX'
+    GUROBI = 'Gurobi'
+    LINDO = 'Lindo'
+    SULUM = 'Sulum'
+    MOSEK = 'MOSEK'
+    LPSOLVE = 'LPSolve'
+    CONOPT = 'Conopt'
+    KNITRO = 'Knitro'
+    IPOPT = 'Ipopt'

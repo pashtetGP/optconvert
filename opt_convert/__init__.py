@@ -1,4 +1,4 @@
-from opt_convert.const import Messages, Numbers
+from opt_convert.const import Messages, Numbers, Solvers
 from opt_convert.model import Model
 from opt_convert.mpl_with_ext_data import MplWithExtData
 from opt_convert.converter import Converter

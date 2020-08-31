@@ -2,7 +2,7 @@ from pathlib import Path
 import os
 import shutil
 import re
-from opt_convert import Messages, Numbers
+from opt_convert import Messages, Numbers, Solvers
 from mplpy import mpl, ResultType, ModelResultException, InputFileType
 
 mpl.Options['MpsCreateAsMin'].Value = 1  # always transform the obj function to min before mps gen
@@ -180,10 +180,12 @@ class Model:
 
         return True
 
-    def solve(self):
+    def solve(self, solver: str = None):
 
+        if solver is None:
+            solver = Solvers.COIN_MP
         if self._mpl_model:
-            self._mpl_model.Solve()
+            self._mpl_model.Solve(mpl.Solvers[solver])
             return self.obj_value
         else:
             raise RuntimeError(Messages.MSG_NO_MPL_MODEL_CANNOT_SOLVE)

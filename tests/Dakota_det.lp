@@ -15,10 +15,10 @@
 \   
 
 
-MAXIMIZE
-  Profit:  BinVecDes + BinVecTab + BinVecCha - 2 PurchaseLum
-     - 4 PurchaseFin - 5.2 PurchaseCar + 60 ProductionDes
-     + 40 ProductionTab + 10 ProductionCha + BinaryVar
+MINIMIZE
+  Profit: - BinVecDes - BinVecTab - BinVecCha + 2 PurchaseLum
+     + 4 PurchaseFin + 5.2 PurchaseCar - 60 ProductionDes
+     - 40 ProductionTab - 10 ProductionCha - BinaryVar
 
 SUBJECT TO
   ResourceConstLum:   - PurchaseLum + 8 ProductionDes + 6 ProductionTab

@@ -3,7 +3,7 @@ from unittest.mock import patch
 import sys
 from pathlib import Path
 import shutil
-from opt_convert import Converter, Model, MplWithExtData, parse_args, command_line, Messages
+from opt_convert import Converter, Model, MplWithExtData, parse_args, command_line, Messages, Solvers
 
 
 class TestConverter(TestCase):
@@ -58,13 +58,14 @@ class TestModel(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.initial_argv = sys.argv
+        cls.dakota_det_solution = -4169.0
         Path('temp_subfolder').mkdir(parents=True, exist_ok=True)
 
     def test_init(self):
         filename = 'Dakota_det'
         for format in ['lp', 'mpl', 'mps']:
             model = Model(Path(f'{filename}.{format}'))
-            self.assertEqual(abs(model.solve()), 4169.0)
+            self.assertAlmostEqual(model.solve(), -4169.0, 3)
 
     def test_init_wrong(self):
         filename = 'Dakota_det_wrong'
@@ -87,6 +88,18 @@ class TestModel(TestCase):
             Model(Path(f'{filename}.{format}'))
         self.assertEqual(str(e.exception), Messages.MSG_INPUT_FORMAT_NOT_SUPPORTED)
 
+    def test_solve_default(self):
+        filename = 'Dakota_det'
+        for format in ['lp', 'mpl', 'mps']:
+            model = Model(Path(f'{filename}.{format}'))
+            self.assertAlmostEqual(model.solve(), self.dakota_det_solution, 3)
+
+    def test_solve_lpsolve(self):
+        filename = 'Dakota_det'
+        for format in ['lp', 'mpl', 'mps']:
+            model = Model(Path(f'{filename}.{format}'))
+            self.assertAlmostEqual(model.solve(Solvers.LPSOLVE), self.dakota_det_solution, 3)
+
     def test_export(self):
         filename = 'Dakota_det'
         in_formats = ['mpl', 'mps', 'lp']
@@ -97,7 +110,7 @@ class TestModel(TestCase):
                 print(f'Testing In format: {in_format} Out format: {out_format}')
                 model.export(Path(f'{filename}_converted.{out_format}'))
                 model_new = Model(Path(f'{filename}_converted.{out_format}'))
-                self.assertEqual(abs(model_new.solve()), 4169.0)
+                self.assertAlmostEqual(model_new.solve(), self.dakota_det_solution, 3)
 
     def test_export_subfolder(self):
         filename = 'Dakota_det'
@@ -110,7 +123,7 @@ class TestModel(TestCase):
                 print(f'Testing In format: {in_format} Out format: {out_format}')
                 model.export(Path(f'{out_file}_converted.{out_format}'))
                 model_new = Model(Path(f'{out_file}_converted.{out_format}'))
-                self.assertEqual(abs(model_new.solve()), 4169.0)
+                self.assertAlmostEqual(model_new.solve(), self.dakota_det_solution, 3)
 
     def test_export_not_supported_out_format(self):
         filename = 'Dakota_det'
@@ -157,6 +170,10 @@ class TestModel(TestCase):
 
 class TestMplWithExtData(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        cls.sndp_default_solution = 2200
+
     def test_init(self):
         filename = 'SNDP_default.mpl'
         model = MplWithExtData(Path(filename))
@@ -173,7 +190,7 @@ class TestMplWithExtData(TestCase):
         model.set_ext_data(new_data)
         solution = model.solve()
         model.set_ext_data(old_data)
-        self.assertAlmostEqual(2200, solution, delta=0.01)
+        self.assertAlmostEqual(self.sndp_default_solution, solution, delta=0.01)
 
     def test_export(self):
         filename = 'SNDP_default.mpl'
@@ -191,7 +208,7 @@ class TestMplWithExtData(TestCase):
 
         one_scen_model = MplWithExtData(Path('SNDP_one_scen.mpl'))
         solution = one_scen_model.solve()
-        self.assertAlmostEqual(2200, solution, delta=0.01)
+        self.assertAlmostEqual(self.sndp_default_solution, solution, delta=0.01)
 
     @classmethod
     def tearDownClass(cls):
@@ -277,7 +294,7 @@ class TestCommandLine(TestCase):
 
     def tearDown(self):
         # reset command line arguments after every test
-        sys.argv = TestCommandLine.initial_argv
+        sys.argv = self.initial_argv
 
     @classmethod
     def tearDownClass(cls):
