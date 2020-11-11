@@ -93,7 +93,7 @@ To get a local copy up and running follow these simple steps.
 ### Installation from PyPI
 1. Install scipy, matplotlib and wxpython
     ```
-    pip install scipy, matplotlib, wxpython
+    pip install scipy matplotlib wxpython
     ```
    
 1. Install mplpy
@@ -109,7 +109,7 @@ To get a local copy up and running follow these simple steps.
 
 1. Install scipy, matplotlib and wxpython
     ```
-    pip install scipy, matplotlib, wxpython
+    pip install scipy matplotlib wxpython
     ```
    
 1. Install mplpy
