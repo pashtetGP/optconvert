@@ -52,7 +52,7 @@ Converter for mathematical optimization formats: .mpl, .lp, .xa, .sim, .mpl, .gm
 
 ![CLI example](https://github.com/pashtetGP/optconvert/raw/master/cli_example.png)
 
-Everyone who works with mathematical optimization problems knows what pain in the *** it can be 
+Everyone who works with mathematical optimization problems knows what a pain it is 
 to convert problems from one file format into another. Often ad-hoc solutions for the specific test set
 must be created to read the instances.
 

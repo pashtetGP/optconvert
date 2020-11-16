@@ -58,7 +58,7 @@ class TestModel(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.initial_argv = sys.argv
-        cls.dakota_det_solution = -4169.0
+        cls.dakot_det_obj_value = -4169.0
         Path('temp_subfolder').mkdir(parents=True, exist_ok=True)
 
     def test_init(self):
@@ -92,13 +92,13 @@ class TestModel(TestCase):
         filename = 'Dakota_det'
         for format in ['lp', 'mpl', 'mps']:
             model = Model(Path(f'{filename}.{format}'))
-            self.assertAlmostEqual(model.solve(), self.dakota_det_solution, 3)
+            self.assertAlmostEqual(model.solve(), self.dakot_det_obj_value, 3)
 
     def test_solve_lpsolve(self):
         filename = 'Dakota_det'
         for format in ['lp', 'mpl', 'mps']:
             model = Model(Path(f'{filename}.{format}'))
-            self.assertAlmostEqual(model.solve(Solvers.LPSOLVE), self.dakota_det_solution, 3)
+            self.assertAlmostEqual(model.solve(Solvers.LPSOLVE), self.dakot_det_obj_value, 3)
 
     def test_export(self):
         filename = 'Dakota_det'
@@ -110,7 +110,7 @@ class TestModel(TestCase):
                 print(f'Testing In format: {in_format} Out format: {out_format}')
                 model.export(Path(f'{filename}_converted.{out_format}'))
                 model_new = Model(Path(f'{filename}_converted.{out_format}'))
-                self.assertAlmostEqual(model_new.solve(), self.dakota_det_solution, 3)
+                self.assertAlmostEqual(model_new.solve(), self.dakot_det_obj_value, 3)
 
     def test_export_subfolder(self):
         filename = 'Dakota_det'
@@ -123,7 +123,7 @@ class TestModel(TestCase):
                 print(f'Testing In format: {in_format} Out format: {out_format}')
                 model.export(Path(f'{out_file}_converted.{out_format}'))
                 model_new = Model(Path(f'{out_file}_converted.{out_format}'))
-                self.assertAlmostEqual(model_new.solve(), self.dakota_det_solution, 3)
+                self.assertAlmostEqual(model_new.solve(), self.dakot_det_obj_value, 3)
 
     def test_export_not_supported_out_format(self):
         filename = 'Dakota_det'
@@ -156,6 +156,15 @@ class TestModel(TestCase):
         with self.assertRaises(RuntimeError) as e:
             model.export(Path(f'{filename}_unsupported.{out_format}'))
         self.assertEqual(str(e.exception), Messages.MSG_STOCH_ONLY_TO_MPS)
+
+    def test_solution(self):
+        filename = 'Dakota_det'
+        for format in ['lp', 'mpl', 'mps']:
+            model = Model(Path(f'{filename}.{format}'))
+            self.assertEqual(model.solution['PurchaseFin'], 850)
+            self.assertEqual(model.solution['PurchaseCar'], 487.5)
+            self.assertEqual(model.solution['ProductionDes'], 150)
+            self.assertEqual(model.solution['ProductionTab'], 125)
 
     @classmethod
     def tearDownClass(cls):

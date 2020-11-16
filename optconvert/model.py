@@ -81,6 +81,16 @@ class Model:
             self.solve()
         return self._mpl_model.Solution.ObjectValue
 
+
+    @property
+    def solution(self) -> dict:
+        result = {}
+        solution = self._mpl_model.Solution
+        if not solution.IsAvailable:
+            self.solve()
+
+        return {variable.Name: variable.Activity for variable in self._mpl_model.Matrix.Variables}
+
     @property
     def is_stochastic(self):
         if self._mpl_model.Matrix.ConStageCount:
